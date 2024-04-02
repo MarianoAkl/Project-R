@@ -1,0 +1,54 @@
+#Fonction principale
+
+fonction_prin <- function(jeu_donne) {
+  if (!is.data.frame(jeu_donne))
+    stop(" L'argument fourni n'est pas un data frame")
+  
+  # Traitement des différents types de variables
+  
+  # Création de la matrice pour les nombres d'observation
+  nombre_observations <- matrix(nrow = 2, ncol = ncol(jeu_donne), 
+                                dimnames = list(c("Total :", "Manquantes (NA) :"), colnames(jeu_donne)))
+  # Création de la matrice pour le type des variables
+  type_variable <- matrix(nrow = 1, ncol = ncol(jeu_donne), 
+                          dimnames = list(NULL, colnames(jeu_donne)))
+  # Création de la matrice pour stat_num
+  var_numerique <- sapply(jeu_donne, is.numeric)
+  nombre_variables_numeriques <- sum(var_numerique)
+  nom_var_num <- names(jeu_donne)[var_numerique]
+  stat_num <- matrix(nrow = 9, ncol = nombre_variables_numeriques, 
+                     dimnames = list(c("0%", "10%", "25%", "50%", "75%", "90%", "100%", "Moyenne", "E.T"), nom_var_num))
+  stat_fact <- list(Frequences = list(), Mode = list())
+  var_autre <- character()
+  for (nom in names(jeu_donne)) {
+    total <- length(jeu_donne[[nom]])
+    nbre_na_manq <- sum(is.na(jeu_donne[[nom]]))
+    nombre_observations[, nom] <- c(total, nbre_na_manq)
+    if (is.numeric(jeu_donne[[nom]])) {
+      type_variable[, nom] <- "Numerique"
+      sta <- stats_for_quanti(jeu_donne[[nom]])
+      stat_num[, nom] <- c(sta$quantiles, sta$moyenne, sta$ecarttype)
+  } else if (is.factor(jeu_donne[[nom]])) {
+      type_variable[, nom] <- "Facteur"
+      stat <- stats_for_quali(jeu_donne[[nom]])
+      stat_fact$Frequences[[nom]] <- stat$Frequences
+      stat_fact$Mode[[nom]] <- stat$Mode
+    } else {
+      type_variable[, nom] <- "Autre"
+      var_autre <- c(var_autre, nom)
+    }
+  } 
+  
+  
+  out <- list(
+    nombre_observations = nombre_observations,
+    type_variable = type_variable,
+    stat_num = stat_num,
+    stat_fact = stat_fact,
+    var_autre = var_autre)
+  class(out) <- "fonction_prin"
+  return(out)
+}
+sortie <- fonction_prin(penguins_raw)
+str(sortie)
+
